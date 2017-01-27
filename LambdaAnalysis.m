@@ -5,7 +5,7 @@ classdef LambdaAnalysis < Analysis
         data;
     end
     
-    properties(Constant, Hidden = true)
+    properties(Constant, Hidden)
         mpi = 0.13957018;  % pion mass in GeV/c^2
         mp = 0.937272046;  % proton mass in GeV/c^2
     end
@@ -33,7 +33,6 @@ classdef LambdaAnalysis < Analysis
             fprintf(obj.data,'runNumber eventNumber pt1 pt2 mass');
         end
         
-        % finishes the analysis by plotting the histogram
         function stop(obj)
             fprintf(1,'Lambda analyses terminated\n');
             if (obj.mass.max() > 0)

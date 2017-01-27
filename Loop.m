@@ -2,7 +2,7 @@ classdef Loop < handle
     %Loop loops over a data file of CDF tracks.
     
     properties(SetAccess=protected)
-        file; % CdfDataFile
+        dataFile;   % CdfDataFile
     end
     
     properties % override these public propertiesn nn
@@ -14,14 +14,14 @@ classdef Loop < handle
 
         % constructor, using the filename of the data file
         function obj = Loop(filename)
-            obj.file = CdfDataFile(filename);
+            obj.dataFile = CdfDataFile(filename);
             obj.nevmax = 10000; % (provided cdf.dat has 10000 events anyway)
             obj.report = 10;
         end
 
         % close, just in case we need it
         function close(obj)
-            obj.file.close();
+            obj.dataFile.close();
         end
 
         % main loop
@@ -44,7 +44,7 @@ classdef Loop < handle
             end
 
             % start at the beginning of the data file
-            obj.file.rewind();
+            obj.dataFile.rewind();
 
             fprintf(1,'Begin analyses\n');
 
@@ -56,9 +56,9 @@ classdef Loop < handle
             % read and analyze events one at a time
             nev = 0; % count events
             while 1
-                ev = obj.file.next();
+                ev = obj.dataFile.next();
                 if ev.isValid()
-                    if nev >= obj.nevmax,
+                    if nev >= obj.nevmax
                         fprintf(1, 'Number of processed events reached maximum.\n');
                         break;
                     end
