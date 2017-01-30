@@ -5,6 +5,7 @@
 *.txt
 *.dat
 *.fig
+*.mat
 
 # old version code
 /summer-version
