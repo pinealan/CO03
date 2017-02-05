@@ -1,4 +1,4 @@
-function p = multivariateGaussian(X, mu, var)
+function p = computeProb(X, mu, var)
 %MULTIVARIATEGAUSSIAN Computes the probability density function of the
 %multivariate gaussian distribution.
 %    p = MULTIVARIATEGAUSSIAN(X, mu, Sigma2) Computes the probability 
@@ -15,7 +15,9 @@ if (size(var, 2) == 1) || (size(var, 1) == 1)
     var = diag(var);
 end
 
+% subtracts mean of each feature from every row of samples
 X = bsxfun(@minus, X, mu(:)');
+
 p = (2 * pi) ^ (- k / 2) * det(var) ^ (-0.5) * ...
     exp(-0.5 * sum(bsxfun(@times, X * pinv(var), X), 2));
 
