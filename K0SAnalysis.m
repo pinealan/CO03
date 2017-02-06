@@ -1,6 +1,9 @@
 classdef K0SAnalysis < Analysis
     
-    properties(SetAccess=protected)
+    properties(Access=public)
+        signal_fname;
+        tracks_fname;
+        FLAG_PRINT_EVENT_DETAILS;
     end
     
     properties(Constant, Hidden = true)
@@ -24,7 +27,21 @@ classdef K0SAnalysis < Analysis
             obj.minpt = 1;      % minimum helix transverse momentum
             obj.mindpv = 0.3;   % minimum helix impact parameter
             obj.minlxy = 2;     % minimum vertex transverse distance
-            obj.maxd0 = 0.5;    % maximum vertex impact parameter 
+            obj.maxd0 = 0.5;    % maximum vertex impact parameter
+            obj.signal_fname = 'K_details.txt';
+            obj.tracks_fname = 'K_tracks.txt';
+            obj.FLAG_PRINT_EVENT_DETAILS = 0;
+        end
+        
+        function start(obj)
+            obj.start@Analysis();
+            
+            % prepares reconstruced parents output file
+            obj.fsig = fopen(obj.signal_fname, 'w');
+            fprintf(obj.fsig,'runNumber eventNumber pt1 pt2 mass\n');
+
+            % prepares labelled data output file
+            obj.ftrk = fopen(obj.tracks_fname, 'w');
         end
         
         function event(obj, ev)
@@ -84,11 +101,18 @@ classdef K0SAnalysis < Analysis
                 obj.mass.fill(v(1:nvtx));
             end
             
-            % prints labelled tracks to new file
-            fprintf(obj.fout, '%d %d %g %g %d\n', ...
+            obj.labelTracks(ev, ntrk, labels);
+        end
+        
+        % prints labelled tracks to new file
+        function labelTracks(obj, ev, ntrk, labels)
+            if obj.FLAG_PRINT_EVENT_DETAILS == 1
+                fprintf(obj.ftrk, '%d %d %g %g %d\n', ...
                 ev.runNumber, ev.eventNumber, ev.vertex(1), ev.vertex(2), ntrk);
+            end
+            
             for m = 1:ntrk
-                fprintf(obj.fout, '%g %g %g %g %g %d\n', ...
+                fprintf(obj.ftrk, '%g %g %g %g %g %d\n', ...
                     ev.tracks(m).cotTheta, ...
                     ev.tracks(m).curvature, ...
                     ev.tracks(m).d0, ...

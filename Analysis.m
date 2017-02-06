@@ -9,7 +9,7 @@ classdef Analysis < handle & matlab.mixin.Heterogeneous
         maxd0;      % maximum vertex impact parameter        
         mass;       % mass histrogram
         fsig;       % output file:  list of found kaon parent signals
-        fout;       % output file:  list of tracks and binary classification as kaon chilhren
+        ftrk;       % output file:  list of tracks and binary classification as kaon chilhren
     end
 
     properties (Abstract)
@@ -29,13 +29,6 @@ classdef Analysis < handle & matlab.mixin.Heterogeneous
         function start(obj)
             % empties and reinitialise the histogram
             obj.mass = Histogram(obj.histParas(1), obj.histParas(2), obj.histParas(3));
-
-            % prepares reconstruced parents output file
-            obj.fsig = fopen('K_details.txt', 'w');
-            fprintf(obj.fsig,'runNumber eventNumber pt1 pt2 mass\n');
-
-            % prepares labelled data output file
-            obj.fout = fopen('K_tracks.txt', 'w');
             
             % write to stdout
             fprintf(1, strcat(class(obj), ' initialised\n'));            
@@ -56,8 +49,8 @@ classdef Analysis < handle & matlab.mixin.Heterogeneous
             if obj.fsig ~= 0
                 fclose(obj.fsig);
             end
-            if obj.fout ~= 0
-                fclose(obj.fout);
+            if obj.ftrk ~= 0
+                fclose(obj.ftrk);
             end
             
             % writes to stdout

@@ -11,3 +11,5 @@ for m = 1:n
 end
 
 fclose(data_fp);
+
+save('lb_trks_no_cut.mat');

@@ -5,16 +5,22 @@
 
 %% Main Script
 %   ReadTrack.m should first be ran to create X, Y, the tracks and their labels
+
+% cleans workspace, define constants
 clear;
-load('labelled_tracks.mat');
+LABELLED_FILE   = 'lb_trks_no_cut.mat';
+TRAIN_SIZE  = 50000;
+CV_SIZE     = 50000;
+PARAS = {'cotTheta', 'curvature', 'd0', 'phi0', 'z0'};
 
-% training set
-Xtrain = X(1:50000, :);
-Ytrain = Y(1:50000);
+% loads and prepares the training + cross valadation sets
+load(LABELLED_FILE);
 
-% cross valadation set
-Xcross = X(50001:100000, :);
-Ycross = Y(50001:100000);
+Xtrain = X(1 : TRAIN_SIZE, :);
+Ytrain = Y(1 : TRAIN_SIZE);
+
+Xcross = X(TRAIN_SIZE+1 : TRAIN_SIZE+CV_SIZE, :);
+Ycross = Y(TRAIN_SIZE+1 : TRAIN_SIZE+CV_SIZE);
 
 % feature normalisation
 Xtrain = Xtrain ./ (max(Xtrain) - min(Xtrain));     % only works in MATLAB 2016
@@ -30,10 +36,8 @@ fprintf('Best epsilon found using cross-validation: %e\n', epsilon);
 fprintf('Best F1 on Cross Validation Set:  %f\n', F1);
 fprintf('# Outliers found: %d / %d\n\n', sum(pcross < epsilon), size(Xtrain, 1));
 
-para = {'cotTheta', 'curvature', 'd0', 'phi0', 'z0'};
-
-for m = 1:1
-    for n = 2:3
+for m = 1:5
+    for n = m+1:5
         Xtrain_2d = Xtrain(:, [m, n]);
         
         Xcross_2d = Xcross(:, [m, n]);
@@ -44,15 +48,15 @@ for m = 1:1
 
         [epsilon, F1] = selectThreshold(Ycross, pcross_2d);
 
-        visualiseFit(Xtrain_2d, mu, var);
+        visualiseLabelledFit(Xtrain_2d, Ytrain, mu, var);
         findOutliers(Xtrain_2d, ptrain_2d, epsilon);
         
-        fprintf(['Anomlies in featureas ', para{m}, ' vs ', para{n}, '\n']);
+        fprintf(['Anomlies in featureas ', PARAS{m}, ' vs ', PARAS{n}, '\n']);
         fprintf('Best epsilon found using cross-validation: %e\n', epsilon);
         fprintf('Best F1 on Cross Validation Set:  %f\n', F1);
         fprintf('# Outliers found: %d / %d\n\n', sum(ptrain_2d < epsilon), size(Xtrain_2d, 1));
-        xlabel(para{m})
-        ylabel(para{n})
+        xlabel(PARAS{m})
+        ylabel(PARAS{n})
         
     end
 end
@@ -77,13 +81,34 @@ function visualiseFit(X, mu, var)
 %   This visualization shows you the probability density function of the Gaussian distribution. 
 %   Each example has a location (x1, x2) that depends on its feature values.
 %
-    [X1,X2] = meshgrid(0:.1:1.2);
+    [X1,X2] = meshgrid(-.8:.05:.8);
     Z = computeProb([X1(:) X2(:)],mu,var);
     Z = reshape(Z,size(X1));
 
     figure();
     plot(X(:, 1), X(:, 2),'bx');
     hold on;
+    % Do not plot if there are infinities
+    if (sum(isinf(Z)) == 0)
+        contour(X1, X2, Z, 10.^(-20:3:0)');
+    end
+    hold off;
+end
+
+function visualiseLabelledFit(X, Y, mu, var)
+% Visualize the dataset and its estimated distribution.
+%   This visualization shows you the probability density function of the Gaussian distribution. 
+%   Each example has a location (x1, x2) that depends on its feature values.
+%
+    [X1,X2] = meshgrid(-.8:.05:.8);
+    Z = computeProb([X1(:) X2(:)],mu,var);
+    Z = reshape(Z,size(X1));
+
+    figure();
+    hold on;
+
+    plot(X(Y==0, 1), X(Y==0, 2),'bx');
+    plot(X(Y==1, 1), X(Y==1, 2),'gx');
     % Do not plot if there are infinities
     if (sum(isinf(Z)) == 0)
         contour(X1, X2, Z, 10.^(-20:3:0)');
