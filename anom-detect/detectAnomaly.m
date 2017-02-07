@@ -8,7 +8,7 @@
 
 % cleans workspace, define constants
 clear;
-LABELLED_FILE   = 'lb_trks_no_cut.mat';
+LABELLED_FILE   = 'lb_trks_full_cut.mat';
 TRAIN_SIZE  = 50000;
 CV_SIZE     = 50000;
 PARAS = {'cotTheta', 'curvature', 'd0', 'phi0', 'z0'};
@@ -35,7 +35,7 @@ fprintf('Detects anomaly in 5D feature-space\n')
 fprintf('Best epsilon found using cross-validation: %e\n', epsilon);
 fprintf('Best F1 on Cross Validation Set:  %f\n', F1);
 fprintf('# Outliers found: %d / %d\n\n', sum(pcross < epsilon), size(Xtrain, 1));
-
+    
 for m = 1:5
     for n = m+1:5
         Xtrain_2d = Xtrain(:, [m, n]);

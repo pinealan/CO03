@@ -1,6 +1,7 @@
 ka = K0SAnalysis();
 ka.minpt = 0;
-ka.minlxy = 0;
+ka.minlxy = -999;
+ka.maxd0 = 99;
 ka.tracks_fname = 'ktrks_no_cut.txt';
 loop = Loop('cdf.dat');
 
