@@ -4,6 +4,7 @@ classdef K0SAnalysis < Analysis
         signal_fname;
         tracks_fname;
         FLAG_PRINT_EVENT_DETAILS;
+        FLAG_ADJUST_IMPACT_PARAMETER;
     end
     
     properties(Constant, Hidden = true)
@@ -31,6 +32,7 @@ classdef K0SAnalysis < Analysis
             obj.signal_fname = 'K_details.txt';
             obj.tracks_fname = 'K_tracks.txt';
             obj.FLAG_PRINT_EVENT_DETAILS = 0;
+            obj.FLAG_ADJUST_IMPACT_PARAMETER = 1;
         end
         
         function start(obj)
@@ -112,10 +114,14 @@ classdef K0SAnalysis < Analysis
             end
             
             for m = 1:ntrk
+                d = ev.tracks(m).d0;
+                if obj.FLAG_ADJUST_IMPACT_PARAMETER == 1
+                    d = Helix(ev.tracks(m)).dpv(ev);
+                end
                 fprintf(obj.ftrk, '%g %g %g %g %g %d\n', ...
                     ev.tracks(m).cotTheta, ...
                     ev.tracks(m).curvature, ...
-                    ev.tracks(m).d0, ...
+                    d, ...
                     ev.tracks(m).phi0, ...
                     ev.tracks(m).z0, ...
                     labels(m) ...
