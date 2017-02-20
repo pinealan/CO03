@@ -3,13 +3,14 @@
 %% Main Script
 clear;
 
-load('lb_trks_no_cut.mat');
+load('ktrks_no_cut.mat');
 K = 5;
 MAX_ITER = 30;
 
 centroids = initCentroid(X, K);
 id_X = assignCluster(X, centroids);
 centroids = updateCentroids(X, id_X, K);
+%X = normaliseFeatures(X);
 
 for m = 1:MAX_ITER
     id_X = assignCluster(X, centroids);

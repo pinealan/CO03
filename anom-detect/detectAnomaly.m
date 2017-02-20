@@ -8,9 +8,10 @@
 
 % cleans workspace, define constants
 clear;
-LABELLED_FILE   = 'lb_trks_full_cut.mat';
 TRAIN_SIZE  = 50000;
 CV_SIZE     = 50000;
+FLAG_NORMALISE_FEATURES = false;
+LABELLED_FILE   = 'ktrks_pt_lxy_cut.mat';
 PARAS = {'cotTheta', 'curvature', 'd0', 'phi0', 'z0'};
 
 % loads and prepares the training + cross valadation sets
@@ -23,7 +24,9 @@ Xcross = X(TRAIN_SIZE+1 : TRAIN_SIZE+CV_SIZE, :);
 Ycross = Y(TRAIN_SIZE+1 : TRAIN_SIZE+CV_SIZE);
 
 % feature normalisation
-Xtrain = Xtrain ./ (max(Xtrain) - min(Xtrain));     % only works in MATLAB 2016
+if (FLAG_NORMALISE_FEATURES)
+    Xtrain = normalise(Xtrain);
+end
 
 % finds sample mean and variance
 [mu, var] = estimateGaussian(Xtrain);
@@ -49,7 +52,7 @@ for m = 1:5
         [epsilon, F1] = selectThreshold(Ycross, pcross_2d);
 
         visualiseLabelledFit(Xtrain_2d, Ytrain, mu, var);
-        findOutliers(Xtrain_2d, ptrain_2d, epsilon);
+        %findOutliers(Xtrain_2d, ptrain_2d, epsilon);
         
         fprintf(['Anomlies in featureas ', PARAS{m}, ' vs ', PARAS{n}, '\n']);
         fprintf('Best epsilon found using cross-validation: %e\n', epsilon);
@@ -62,6 +65,13 @@ for m = 1:5
 end
 
 %% Helper functions
+
+function X_norm = normalise(X)
+% Normalises the features on a data set
+%   only works in MATLAB 2016
+%
+    X_norm = X ./ (max(X) - min(X));
+end
 
 function [mu, sigma2] = estimateGaussian(X)
 % This function estimates the parameters of a Gaussian distribution using the data in X

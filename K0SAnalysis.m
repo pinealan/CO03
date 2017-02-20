@@ -3,8 +3,11 @@ classdef K0SAnalysis < Analysis
     properties(Access=public)
         signal_fname;
         tracks_fname;
+        FLAG_CREATE_DETAILS_FILE;
         FLAG_PRINT_EVENT_DETAILS;
         FLAG_ADJUST_IMPACT_PARAMETER;
+        MASS_CENTER;
+        MASS_WINDOW;
     end
     
     properties(Constant, Hidden = true)
@@ -29,19 +32,24 @@ classdef K0SAnalysis < Analysis
             obj.mindpv = 0.3;   % minimum helix impact parameter
             obj.minlxy = 2;     % minimum vertex transverse distance
             obj.maxd0 = 0.5;    % maximum vertex impact parameter
-            obj.signal_fname = 'K_details.txt';
-            obj.tracks_fname = 'K_tracks.txt';
+            obj.signal_fname = 'k_details.txt';
+            obj.tracks_fname = 'ktrks.txt';
+            obj.FLAG_CREATE_DETAILS_FILE = 1;
             obj.FLAG_PRINT_EVENT_DETAILS = 0;
             obj.FLAG_ADJUST_IMPACT_PARAMETER = 1;
+            obj.MASS_CENTER = 0.50;
+            obj.MASS_WINDOW = 0.02;
         end
         
         function start(obj)
             obj.start@Analysis();
             
             % prepares reconstruced parents output file
-            obj.fsig = fopen(obj.signal_fname, 'w');
-            fprintf(obj.fsig,'runNumber eventNumber pt1 pt2 mass\n');
-
+            if obj.FLAG_CREATE_DETAILS_FILE
+                obj.fsig = fopen(obj.signal_fname, 'w');
+                fprintf(obj.fsig,'runNumber eventNumber pt1 pt2 mass\n');
+            end
+            
             % prepares labelled data output file
             obj.ftrk = fopen(obj.tracks_fname, 'w');
         end
@@ -49,7 +57,7 @@ classdef K0SAnalysis < Analysis
         function event(obj, ev)
             ntrk = numel(ev.tracks);
             hlx = Helix(ev.tracks);
-            v = zeros(ntrk, 1);
+            mass = zeros(ntrk, 1);
             labels = zeros(ntrk, 1);
             
             nvtx = 0;  % counter for number of detected decays (signal)
@@ -90,20 +98,30 @@ classdef K0SAnalysis < Analysis
                     
                     % passed all tests, find and store mass of vertex
                     nvtx = nvtx + 1;
-                    v(nvtx) = ivtx.mass(obj.mpi, obj.mpi);
-                    fprintf(obj.fsig, '%i %i %f %f %f\n', ...
-                        ev.runNumber, ev.eventNumber, hlx(it).pT(), hlx(jt).pT(), v(nvtx));
-
-                    % labels whether track came from kaon or not
-                    labels(it) = 1;
-                    labels(jt) = 1;                    
+                    mass(nvtx) = ivtx.mass(obj.mpi, obj.mpi);
+                    if obj.FLAG_CREATE_DETAILS_FILE
+                        fprintf(obj.fsig, '%i %i %f %f %f\n', ...
+                            ev.runNumber, ev.eventNumber, hlx(it).pT(), hlx(jt).pT(), mass(nvtx));
+                    end
+                    
+                    % label tracks from kaon if mass falls in window
+                    if obj.genuineMass(mass(nvtx))
+                        labels(it) = 1;
+                        labels(jt) = 1;                    
+                    end
                 end
             end
             if (nvtx > 0)
-                obj.mass.fill(v(1:nvtx));
+                obj.mass.fill(mass(1:nvtx));
             end
             
             obj.labelTracks(ev, ntrk, labels);
+        end
+        
+        % checks if a vertex mass falls within pre-defined window
+        function res = genuineMass(obj, mass)
+            res = mass < obj.MASS_CENTER + obj.MASS_WINDOW && ...
+                  mass > obj.MASS_CENTER - obj.MASS_WINDOW;
         end
         
         % prints labelled tracks to new file

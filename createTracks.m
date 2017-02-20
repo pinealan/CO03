@@ -1,14 +1,26 @@
-ka = K0SAnalysis();
-ka.minpt = 0;
-ka.minlxy = -999;
-ka.maxd0 = 99;
-ka.tracks_fname = 'ktrks_no_cut.txt';
-loop = Loop('cdf.dat');
+% constants, filename, run number, analysis type, version
+clear
+RUN_NAME = 'mass_pt_lxy_cut';
 
+% initialise analyses
+ka = K0SAnalysis();
+ka.mindpv = 0;
+%ka.minpt = 0;
+%ka.minlxy = -999;
+ka.maxd0 = 99;
+ka.FLAG_CREATE_DETAILS_FILE = 0;
+ka.tracks_fname = strcat('ktrks_', RUN_NAME, '.txt');
+
+% starts analysis loop
+loop = Loop('cdf.dat');
 loop.run(ka);
 
-clear
-data_fp = fopen('ktrks_no_cut.txt');
+% saves the histogram plot
+saveas(figure(1), strcat('hist_', RUN_NAME, '.fig'));
+
+% prepares to create matlab workspace file from labelled tracks file
+
+data_fp = fopen(strcat('ktrks_', RUN_NAME, '.txt'));
 
 % intialise input buffers
 n = 500000;
@@ -37,4 +49,4 @@ Y = Y(1:m);
 
 fclose(data_fp);
 
-save('lb_trks_no_cut.mat');
+save(strcat('ktrks_', RUN_NAME, '.mat'));
