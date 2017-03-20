@@ -41,6 +41,22 @@ classdef CdfTrack
             end
         end
 
+        % overload equality operator
+        function b = eq(trk1, trk2)
+            b = true;
+            if trk1.cotTheta ~= trk2.cotTheta
+                b = false;
+            elseif trk1.curvature ~= trk2.curvature
+                b = false;
+            elseif trk1.d0 ~= trk2.d0
+                b = false;
+            elseif trk1.phi0 ~= trk2.phi0
+                b = false;
+            elseif trk1.z0 ~= trk2.z0
+                b = false;
+            end
+        end
+        
         % check if this object is valid
         function valid = isValid(obj)
             valid = (obj.cotTheta == -999.0);
