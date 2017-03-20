@@ -41,9 +41,9 @@ classdef CdfHandle < handle
             events = events(1: nev);
             dataFile.close();
         end
-        
-        function event = getEventByTrack(~, data, track)
-            for ev = data
+
+        function event = getEventByTrack(~, events, track)
+            for ev = events
                 for trk = ev.tracks
                     if trk == track
                         event = ev;
@@ -54,6 +54,8 @@ classdef CdfHandle < handle
             event = -1;
         end
         
+        
+            
         function createCdfDataFile(~, fileName, events)
             if ~ischar(fileName)
                 return

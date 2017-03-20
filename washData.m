@@ -1,13 +1,13 @@
 clear;
 MAX_TRACKS = 500000;
 MAX_EVENTS = 10000;
-RUN_NAME = 'full-mass-cut-raw-K-20';
+RUN_NAME = 'full-mass-cut-raw-extended-K-20';
 
 % Initialse handle to cdf dataset
 cdf = CdfHandle();
 
 % Loads dataset
-data = cdf.load('cdf.dat');
+events = cdf.load('cdf.dat');
 
 % Reads tracks from cluster files
 validClusterTracks = CdfTrack(zeros(5, MAX_TRACKS));
@@ -23,7 +23,7 @@ for cluster = validClusters
             break;  % end of file
         end
         
-        pars = sscanf(s, '%g %g %g %g %g\n', 5);
+        pars = sscanf(s, '%g %g %g %g %g %d %d\n', 5);
         track = CdfTrack(pars);
         ntrks = ntrks + 1;
         validClusterTracks(ntrks) = track;
@@ -57,7 +57,7 @@ ntrk = 0;
 reconEvTrks = zeros(1, MAX_EVENTS);
 
 for track = validClusterTracks
-    ev = cdf.getEventByTrack(data, track);
+    ev = cdf.getEventByTrack(events, track);
 
     ntrk = ntrk + 1;
     if mod(ntrk, 100) == 0
