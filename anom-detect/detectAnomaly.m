@@ -10,9 +10,9 @@
 clear;
 TRAIN_SIZE  = 50000;
 CV_SIZE     = 50000;
-FLAG_NORMALISE_FEATURES = false;
-LABELLED_FILE   = 'ktrks_pt_lxy_cut.mat';
-PARAS = {'cotTheta', 'curvature', 'd0', 'phi0', 'z0'};
+FLAG_NORMALISE_FEATURES = true;
+LABELLED_FILE   = 'ktrks_mass_pt_lxy_cut.mat';
+PARAS = {'cotTheta', 'curvature', 'dpv', 'phi0', 'z0'};
 
 % loads and prepares the training + cross valadation sets
 load(LABELLED_FILE);
@@ -38,7 +38,7 @@ fprintf('Detects anomaly in 5D feature-space\n')
 fprintf('Best epsilon found using cross-validation: %e\n', epsilon);
 fprintf('Best F1 on Cross Validation Set:  %f\n', F1);
 fprintf('# Outliers found: %d / %d\n\n', sum(pcross < epsilon), size(Xtrain, 1));
-    
+
 for m = 1:5
     for n = m+1:5
         Xtrain_2d = Xtrain(:, [m, n]);

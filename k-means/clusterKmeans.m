@@ -5,7 +5,7 @@ clear;
 
 % constants / parameters
 PARAS = {'cotThe', 'curv', 'dpv', 'phi0', 'z0'};
-CUT_NAME = 'full-mass-cut-raw';
+CUT_NAME = 'full-mass-cut-raw-extended';
 MAT_FILE = strcat('ktrks-', CUT_NAME, '.mat');
 K = 20;
 MAX_ITER = 80;
@@ -15,7 +15,7 @@ FLAG_CREATE_TXT = true;
 load(MAT_FILE);
 
 % prepares tracks
-X_mod = X;
+X_mod = X(1:5, :);
 X_mod(:, [1, 3]) = abs(X_mod(:, [1, 3]));
 
 %X = normaliseFeatures(X);
@@ -109,7 +109,7 @@ function writeCluster (X, m, CUT_NAME, K)
     % @HARDCODE @CHANGE THIS
     f = fopen(strcat(path, 'results/', CUT_NAME, '-K-', string(K), '/cluster-', string(m), '.txt'), 'w');
     for n = 1:size(X, 1)
-        fprintf(f, '%g %g %g %g %g\n', X(n, 1), X(n, 2), X(n, 3), X(n, 4), X(n, 5));
+        fprintf(f, '%g %g %g %g %g %d %d\n', X(n, 1), X(n, 2), X(n, 3), X(n, 4), X(n, 5), X(n, 6), X(n, 7));
     end
     fclose(f);
 end

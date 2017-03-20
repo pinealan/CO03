@@ -1,6 +1,6 @@
 % constants, filename, run number, analysis type, version
 clear
-RUN_NAME = 'full-mass-cut-raw';
+RUN_NAME = 'full-mass-cut-raw-extended';
 
 % initialise analyses
 ka = K0SAnalysis();
@@ -25,24 +25,24 @@ data_fp = fopen(strcat('ktrks-', RUN_NAME, '.txt'));
 % intialise input buffers
 n = 500000;
 m = 1;
-X = zeros(n, 5);
+X = zeros(n, 7);
 Y = zeros(n, 1);
 
-tmp = fscanf(data_fp, '%g %g %g %g %g %d', [1, 6]);
+tmp = fscanf(data_fp, '%g %g %g %g %g %d %d %d', [1, 8]);
 while (feof(data_fp) == 0)
     
-    X(m, :) = tmp(1:5);
-    Y(m) = tmp(6);
+    X(m, :) = tmp(1:7);
+    Y(m) = tmp(8);
     
     % doubles buffer size when overflowing
     m = m+1;
     if m > n
-        X = [X; zeros(n, 5)];
+        X = [X; zeros(n, 7)];
         Y = [Y; zeros(n, 1)];
         n = n*2;
     end
         
-    tmp = fscanf(data_fp, '%g %g %g %g %g %d', [1, 6]);
+    tmp = fscanf(data_fp, '%g %g %g %g %g %d %d %d', [1, 8]);
 end
 X = X(1:m, :);
 Y = Y(1:m);
