@@ -5,13 +5,14 @@ classdef CdfHandle < handle
         nevmax;         % maximum number of events to process
         report;         % number of events between each console report
     end
-    
+
     methods
         function this = CdfHandle()
             this.nevmax = 10000;
             this.report = 100;
         end
 
+        % load data file into events array
         function [events, nev] = load(this, cdfFile)
             dataFile = CdfDataFile(cdfFile);
             events = CdfEvent(this.nevmax);
@@ -30,7 +31,7 @@ classdef CdfHandle < handle
                     end
 
                     if mod(nev, this.report) == 0
-                        fprintf(1, '%d, events loaded\n', nev);
+                        fprintf(1, '%d events loaded\n', nev);
                     end
                 else
                     fprintf(1, 'Reached the end of data file\n');
@@ -42,6 +43,7 @@ classdef CdfHandle < handle
             dataFile.close();
         end
 
+        % get event from track object
         function event = getEventByTrack(~, events, track)
             for ev = events
                 for trk = ev.tracks
@@ -53,9 +55,13 @@ classdef CdfHandle < handle
             end
             event = -1;
         end
-        
-        
-            
+
+        % get event by id
+        function event = getEventById(~, events, id)
+            event = events(id);
+        end
+
+        % create data file from events array
         function createCdfDataFile(~, fileName, events)
             if ~ischar(fileName)
                 return
