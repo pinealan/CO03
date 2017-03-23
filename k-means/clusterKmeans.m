@@ -1,11 +1,9 @@
-%% K-means clustering
-
 %% Main Script
 clear;
 
 % constants / parameters
 PARAS = {'cotThe', 'curv', 'dpv', 'phi0', 'z0'};
-CUT_NAME = 'full-mass-cut-raw-extended';
+CUT_NAME = 'full-mass-cut';
 MAT_FILE = strcat('ktrks-', CUT_NAME, '.mat');
 K = 20;
 MAX_ITER = 80;
@@ -15,13 +13,13 @@ FLAG_CREATE_TXT = true;
 load(MAT_FILE);
 
 % prepares tracks
-X_mod = X(1:5, :);
+X_mod = [X(:, 3:4) X(:, 8) X(:, 6:7)];
 X_mod(:, [1, 3]) = abs(X_mod(:, [1, 3]));
 
 %X = normaliseFeatures(X);
 %range = 1;
 range = max(X_mod) - min(X_mod);
-X_mod = X_mod ./ (max(X) - min(X_mod));
+X_mod = X_mod ./ (max(X_mod) - min(X_mod));
 
 % Step 1: Initialise centroids + Assign centroids 
 centroids = initCentroid(X_mod, K);
@@ -51,11 +49,11 @@ for m = 1:K
     
     fprintf('    %2.d: %7d %7d     %-6.3f%%     %5.2f%%\n', clusterDetails(m, :));
     
-    
     X_m = X(id_X == m, :);
-    %Y_m = Y(id_X == m);
+    Y_m = Y(id_X == m);
+
     if (FLAG_CREATE_TXT)
-        writeCluster(X_m, m, CUT_NAME, K);
+        writeCluster(X_m, Y_m, m, CUT_NAME, K);
     end
 end
 
@@ -101,7 +99,7 @@ function centroids = updateCentroids(X, id_X, K)
     end
 end
 
-function writeCluster (X, m, CUT_NAME, K)
+function writeCluster (X, Y, m, CUT_NAME, K)
     fullpath = mfilename('fullpath');
     folder = strfind(fullpath, '\');
     path = fullpath(1:folder(end));
@@ -109,7 +107,7 @@ function writeCluster (X, m, CUT_NAME, K)
     % @HARDCODE @CHANGE THIS
     f = fopen(strcat(path, 'results/', CUT_NAME, '-K-', string(K), '/cluster-', string(m), '.txt'), 'w');
     for n = 1:size(X, 1)
-        fprintf(f, '%g %g %g %g %g %d %d\n', X(n, 1), X(n, 2), X(n, 3), X(n, 4), X(n, 5), X(n, 6), X(n, 7));
+        fprintf(f, '%d %d %g %g %g %g %g %g %d\n', X(n, 1), X(n, 2), X(n, 3), X(n, 4), X(n, 5), X(n, 6), X(n, 7), X(n, 8), Y(n));
     end
     fclose(f);
 end
