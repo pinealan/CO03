@@ -2,6 +2,12 @@ classdef Analysis < handle & matlab.mixin.Heterogeneous
     % Analysis prototype class for data analysis.
     %   could be an abstract class or even an interface
 
+    properties(Access=public)
+        signal_fname;
+        tracks_fname;
+        opts;
+    end
+    
     properties
         minpt;      % minimum track tranverse momentum
         minlxy;     % minimum vertex transverse flight distance
@@ -13,24 +19,34 @@ classdef Analysis < handle & matlab.mixin.Heterogeneous
     end
 
     properties (Abstract)
-        histParas;  % array of size 3 of histogram parameters
+        hist_paras;  % array of size 3 of histogram parameters
     end
     
     methods
-        
+
         % Abstract constructor
-        function obj = Analysis(filename)
-            if nargin == 1
-                obj.GetResults(filename);
-            end
+        function obj = Analysis()
+            obj.opts.backup_signals = 0;
+            obj.opts.backup_tracks = 0;
+            obj.opts.adjust_impact_param = 1;
         end
 
         % initialise analysis
         function start(obj)
             % empties and reinitialise the histogram
-            obj.mass = Histogram(obj.histParas(1), obj.histParas(2), obj.histParas(3));
-            
-            % write to stdout
+            obj.mass = Histogram(obj.hist_paras(1), obj.hist_paras(2), obj.hist_paras(3));
+
+            % create txt file for storing signals
+            if obj.opts.backup_signals
+                obj.fsig = fopen(obj.signal_fname, 'w');
+            end
+
+            % create txt file for storing all process tracks
+            if obj.opts.backup_tracks
+                obj.ftrk = fopen(obj.tracks_fname, 'w');
+            end
+
+            % finish initialisation
             fprintf(1, strcat(class(obj), ' initialised\n'));            
         end
         

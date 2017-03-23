@@ -1,66 +1,41 @@
 classdef K0SAnalysis < Analysis
     
-    properties(Access=public)
-        signal_fname;
-        tracks_fname;
-        FLAG_CREATE_DETAILS_FILE;
-        FLAG_PRINT_EVENT_DETAILS;
-        FLAG_ADJUST_IMPACT_PARAMETER;
-        MASS_CENTER;
-        MASS_WINDOW;
-    end
-    
     properties(Constant, Hidden = true)
         mpi = 0.13957018;  % pion mass in GeV
     end
     
     properties
-        histParas = [100, 0.4, 0.6];  % array of size 3 of histogram parameters
+        hist_paras = [100, 0.4, 0.6];  % array of size 3 of histogram parameters
     end
     
     methods
         
         % Constructor
         function obj = K0SAnalysis(filename)
+        
+            % initialise kaon analysis parameters
+            obj.minpt   = 1;        % minimum helix transverse momentum
+            obj.mindpv  = 0.3;      % minimum helix impact parameter
+            obj.minlxy  = 2;        % minimum vertex transverse distance
+            obj.maxd0   = 0.5;      % maximum vertex impact parameter
+
+            % other hyper parameters, for data analytics/washing
+            obj.opts.mass_center = 0.5;
+            obj.opts.mass_window = 0.02 ;
+
             if nargin == 1
-                supargs = filename;
-            else
-                supargs = {};
+                obj.mass = GetResult(filename);
             end
-            obj = obj@Analysis(supargs{:});
-            obj.minpt = 1;      % minimum helix transverse momentum
-            obj.mindpv = 0.3;   % minimum helix impact parameter
-            obj.minlxy = 2;     % minimum vertex transverse distance
-            obj.maxd0 = 0.5;    % maximum vertex impact parameter
-            obj.signal_fname = 'k-signals.txt';
-            obj.tracks_fname = 'ktrks.txt';
-            obj.FLAG_CREATE_DETAILS_FILE = 1;
-            obj.FLAG_PRINT_EVENT_DETAILS = 0;
-            obj.FLAG_ADJUST_IMPACT_PARAMETER = 1;
-            obj.MASS_CENTER = 0.50;
-            obj.MASS_WINDOW = 0.02;
         end
         
-        function start(obj)
-            obj.start@Analysis();
+        function event(obj, ev, nev)
+            ntrk    = numel(ev.tracks);
+            hlxs    = Helix(ev.tracks);
             
-            % prepares reconstruced parents output file
-            if obj.FLAG_CREATE_DETAILS_FILE
-                obj.fsig = fopen(obj.signal_fname, 'w');
-                fprintf(obj.fsig,'runNumber eventNumber pt1 pt2 mass\n');
-            end
+            mass    = zeros(ntrk, 1);
+            labels  = zeros(ntrk, 1);
             
-            % prepares labelled data output file
-            obj.ftrk = fopen(obj.tracks_fname, 'w');
-        end
-        
-        function event(obj, ev)
-            ntrk = numel(ev.tracks);
-            hlx = Helix(ev.tracks);
-            mass = zeros(ntrk, 1);
-            labels = zeros(ntrk, 1);
-            
-            nvtx = 0;  % counter for number of detected decays (signal)
+            nvtx = 0;  % counter number of detected signals (kaon decay vertex)
 
             % loop over all combinations of track pairs
             for it = 1:(ntrk - 1)
@@ -72,17 +47,17 @@ classdef K0SAnalysis < Analysis
                     end
                     
                     % checks the parameter related to each track
-                    if (abs(hlx(it).pT()) < obj.minpt)
+                    if (abs(hlxs(it).pT()) < obj.minpt)
                         continue;
-                    elseif (abs(hlx(jt).pT()) < obj.minpt)
+                    elseif (abs(hlxs(jt).pT()) < obj.minpt)
                         continue;
-                    elseif (abs(hlx(it).dpv(ev)) < obj.mindpv)
+                    elseif (abs(hlxs(it).dpv(ev)) < obj.mindpv)
                         continue;
-                    elseif (abs(hlx(jt).dpv(ev)) < obj.mindpv)
+                    elseif (abs(hlxs(jt).dpv(ev)) < obj.mindpv)
                         continue;
                     end
                     
-                    ivtx = Vertex(hlx(it), hlx(jt));
+                    ivtx = Vertex(hlxs(it), hlxs(jt));
                     
                     % stops if tracks does not intersect
                     if isempty(ivtx.vtx)
@@ -99,10 +74,6 @@ classdef K0SAnalysis < Analysis
                     % passed all tests, find and store mass of vertex
                     nvtx = nvtx + 1;
                     mass(nvtx) = ivtx.mass(obj.mpi, obj.mpi);
-                    if obj.FLAG_CREATE_DETAILS_FILE
-                        fprintf(obj.fsig, '%i %i %f %f %f\n', ...
-                            ev.runNumber, ev.eventNumber, hlx(it).pT(), hlx(jt).pT(), mass(nvtx));
-                    end
                     
                     % label tracks from kaon if mass falls in window
                     if obj.genuineMass(mass(nvtx))
@@ -111,67 +82,70 @@ classdef K0SAnalysis < Analysis
                     end
                 end
             end
+            
             if (nvtx > 0)
                 obj.mass.fill(mass(1:nvtx));
             end
             
-            obj.labelTracks(ev, ntrk, labels);
+            obj.labelTracks(hlxs, ntrk, ev, nev, labels);
         end
-        
+
         % checks if a vertex mass falls within pre-defined window
         function res = genuineMass(obj, mass)
-            res = mass < obj.MASS_CENTER + obj.MASS_WINDOW && ...
-                  mass > obj.MASS_CENTER - obj.MASS_WINDOW;
+            res = mass < obj.opts.mass_center + obj.opts.mass_window && ...
+                  mass > obj.opts.mass_center - obj.opts.mass_window;
         end
-        
+
         % prints labelled tracks to new file
-        function labelTracks(obj, ev, ntrk, labels)
-            if obj.FLAG_PRINT_EVENT_DETAILS == 1
-                fprintf(obj.ftrk, '%d %d %g %g %d\n', ...
-                ev.runNumber, ev.eventNumber, ev.vertex(1), ev.vertex(2), ntrk);
-            end
-            
+        function labelTracks(obj, hlxs, ntrk, ev, nev, labels)
             for m = 1:ntrk
-                d = ev.tracks(m).d0;
-                if obj.FLAG_ADJUST_IMPACT_PARAMETER == 1
-                    d = Helix(ev.tracks(m)).dpv(ev);
-                end
-                fprintf(obj.ftrk, '%g %g %g %g %g %d %d %d\n', ...
-                    ev.tracks(m).cotTheta, ...
-                    ev.tracks(m).curvature, ...
-                    d, ...
-                    ev.tracks(m).phi0, ...
-                    ev.tracks(m).z0, ...
-                    ev.runNumber, ...
-                    ev.eventNumber, ...
+                fprintf(obj.ftrk, '%d %d %g %g %g %g %g %g %d\n', ...
+                    nev, ...
+                    m, ...
+                    hlxs(m).trk.cotTheta, ...
+                    hlxs(m).trk.curvature, ...
+                    hlxs(m).trk.d0, ...
+                    hlxs(m).trk.phi0, ...
+                    hlxs(m).trk.z0, ...
+                    hlxs(m).dpv(ev), ...
                     labels(m) ...
                 );
             end
         end
         
-        % creates a text file to store the data
+        % store histogram data in txt file
         function BackResults(obj, filename)
             id = fopen(filename, 'w');
+
+            % histogram meta-data
             fprintf(id,'%i %g %g %i %i ', ...
                 obj.mass.nbins, obj.mass.xlo, obj.mass.xhi, obj.mass.underflow, obj.mass.overflow);
+
+            % bin data
             for ii = 1:obj.mass.nbins
                 fprintf(id, '%i ', obj.mass.data(ii));
             end
+
             fclose(id);
         end
         
-        % gets the data from a data file
-        function GetResults(obj, filename)
+        % retrieve stored histogram data from txt file
+        function mass = GetResults(filename)
             id = fopen(filename);
+            
             n = fscanf(id, '%i', 1);
-            xbnd = fscanf(id, '%g %g', 2);
-            v = fscanf(id, '%i', (n + 2));
-            obj.mass = Histogram(n, xbnd(1), xbnd(2));
-            obj.mass.underflow = v(1);
-            obj.mass.overflow = v(2);
-            for ii = 3:(n + 2)
-                obj.mass.data(ii - 2) = v(ii);
+            [xlo, xhi, uf, of] = fscanf(id, '%g %g %i %i', 4);
+            pars = fscanf(id, '%i', (n));
+
+            % initialise histogram
+            mass = Histogram(n, xlo, xhi);
+            mass.underflow = uf;
+            mass.overflow = of;
+            
+            for k = 1:n
+                mass.data(k) = pars(k);
             end
+            
             fclose(id);
         end
         

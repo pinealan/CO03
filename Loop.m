@@ -62,10 +62,10 @@ classdef Loop < handle
                         fprintf(1, 'Number of processed events reached maximum.\n');
                         break;
                     end
-                    for ia = 1:na
-                        ca{ia}.event(ev);
-                    end
                     nev = nev + 1;
+                    for ia = 1:na
+                        ca{ia}.event(ev, nev);
+                    end
                     if mod(nev, obj.report) == 0
                         fprintf(1,'%d events processed\n', nev);
                     end
