@@ -87,7 +87,9 @@ classdef K0SAnalysis < Analysis
                 obj.mass.fill(mass(1:nvtx));
             end
             
-            obj.labelTracks(hlxs, ntrk, ev, nev, labels);
+            if obj.opts.backup_tracks
+                obj.labelTracks(hlxs, ntrk, ev, nev, labels);
+            end
         end
 
         % checks if a vertex mass falls within pre-defined window

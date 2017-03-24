@@ -20,5 +20,9 @@ classdef MockEvent < CdfEvent
         function setVertex(obj, v)
             obj.vertex = v;
         end
+        
+        function setTracks(obj, t)
+            obj.tracks = t;
+        end
     end
 end

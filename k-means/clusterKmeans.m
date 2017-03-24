@@ -140,4 +140,5 @@ function visualise(X, Y, centroids, CUT_NAME)
     plot3(X(Y == 1, 1), X(Y == 1, 2), X(Y == 1, 3), 'gx')
     plot3(centroids(:, 1), centroids(:, 2), centroids(:, 3), 'm*')
     saveas(figure(1), char(strcat('results/scatter', CUT_NAME, '-K', string(K))), 'fig');
+    whitebg('w');
 end

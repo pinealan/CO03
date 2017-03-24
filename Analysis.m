@@ -3,8 +3,6 @@ classdef Analysis < handle & matlab.mixin.Heterogeneous
     %   could be an abstract class or even an interface
 
     properties(Access=public)
-        signal_fname;
-        tracks_fname;
         opts;
     end
     
@@ -28,7 +26,6 @@ classdef Analysis < handle & matlab.mixin.Heterogeneous
         function obj = Analysis()
             obj.opts.backup_signals = 0;
             obj.opts.backup_tracks = 0;
-            obj.opts.adjust_impact_param = 1;
         end
 
         % initialise analysis
@@ -38,12 +35,12 @@ classdef Analysis < handle & matlab.mixin.Heterogeneous
 
             % create txt file for storing signals
             if obj.opts.backup_signals
-                obj.fsig = fopen(obj.signal_fname, 'w');
+                obj.fsig = fopen(obj.opts.signal_fname, 'w');
             end
 
             % create txt file for storing all process tracks
             if obj.opts.backup_tracks
-                obj.ftrk = fopen(obj.tracks_fname, 'w');
+                obj.ftrk = fopen(obj.opts.tracks_fname, 'w');
             end
 
             % finish initialisation
