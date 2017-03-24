@@ -1,7 +1,7 @@
 classdef CdfEvent < handle
     % CdfEvent contains CDF event data
 
-    properties(SetAccess=?CdfDataFile)
+    properties(SetAccess = {?CdfDataFile,?MockEvent})
         runNumber    % integer:  CDF run number
         eventNumber  % integer:  CDF event number within run
         vertex       % 2x1 float:  transverse location (xy) of primary interaction vertex
@@ -21,10 +21,9 @@ classdef CdfEvent < handle
                 obj.tracks = [];
             elseif nargin == 1
                 obj(varargin{1}) = CdfEvent;
-            elseif nargin == 4
-                obj.runNumber = varargin{1};
-                obj.eventNumber = varargin{2};
-                obj.vertex = [varargin{3}, varargin{4}];
+            else
+                disp('Wrong usage');
+                obj = -1;
             end
         end
 
