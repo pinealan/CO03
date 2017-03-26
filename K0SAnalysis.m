@@ -5,7 +5,10 @@ classdef K0SAnalysis < Analysis
     end
     
     properties
-        hist_paras = [100, 0.4, 0.6];  % array of size 3 of histogram parameters
+        mass; % mass histrogram
+        fsig; % output file: list of found kaon parent signals
+        ftrk; % output file: list of tracks and binary classification as kaon chilhren
+        hist_paras = [100, 0.4, 0.6];   % array of size 3 of histogram parameters
     end
     
     methods
@@ -28,11 +31,49 @@ classdef K0SAnalysis < Analysis
             end
         end
         
+        function start(obj)
+            % empties and reinitialise the histogram
+            obj.mass = Histogram(obj.hist_paras(1), obj.hist_paras(2), obj.hist_paras(3));
+
+            % create txt file for storing signals
+            if obj.opts.backup_signals
+                obj.fsig = fopen(obj.opts.signal_fname, 'w');
+            end
+
+            % create txt file for storing all process tracks
+            if obj.opts.backup_tracks
+                obj.ftrk = fopen(obj.opts.tracks_fname, 'w');
+            end
+            
+            start@Analysis(obj);
+        end
+        
+        function stop(obj)
+            % plots graph
+            if (obj.mass.max() > 0)
+                obj.mass.plot();
+                xlabel('mass [GeV/c^2]');
+                ylabel('entries/(2 MeV/c^2)');
+            else
+                fprintf('No signal\n');
+            end
+            
+            % closes output files
+            if obj.fsig ~= 0
+                fclose(obj.fsig);
+            end
+            if obj.ftrk ~= 0
+                fclose(obj.ftrk);
+            end
+            
+            stop@Analysis(obj);
+        end
+        
         function event(obj, ev, nev)
             ntrk    = numel(ev.tracks);
             hlxs    = Helix(ev.tracks);
             
-            mass    = zeros(ntrk, 1);
+            masses    = zeros(ntrk, 1);
             labels  = zeros(ntrk, 1);
             
             nvtx = 0;  % counter number of detected signals (kaon decay vertex)
@@ -73,10 +114,10 @@ classdef K0SAnalysis < Analysis
                     
                     % passed all tests, find and store mass of vertex
                     nvtx = nvtx + 1;
-                    mass(nvtx) = ivtx.mass(obj.mpi, obj.mpi);
+                    masses(nvtx) = ivtx.mass(obj.mpi, obj.mpi);
                     
                     % label tracks from kaon if mass falls in window
-                    if obj.genuineMass(mass(nvtx))
+                    if obj.genuineMass(masses(nvtx))
                         labels(it) = 1;
                         labels(jt) = 1;                    
                     end
@@ -84,7 +125,7 @@ classdef K0SAnalysis < Analysis
             end
             
             if (nvtx > 0)
-                obj.mass.fill(mass(1:nvtx));
+                obj.mass.fill(masses(1:nvtx));
             end
             
             if obj.opts.backup_tracks

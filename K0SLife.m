@@ -6,8 +6,8 @@ classdef K0SLife < Analysis
         ctside;     % side band histogram
         lxy;        % main band transverse distance
         lxyside;    % side band transverse distance
-        maindata;
-        sidedata;
+        %maindata;
+        %sidedata;
     end
     
     properties(Constant, Hidden = true)
@@ -38,8 +38,8 @@ classdef K0SLife < Analysis
             obj.lxy = Histogram(100, 0, 40);
             obj.lxyside = Histogram(100, 0, 40);
             fprintf(1,'K-Short lifetime analyses initialised\n');
-            obj.maindata = fopen('KLife_main_detail.dat', 'w');
-            obj.sidedata = fopen('KLife_side_detail.dat', 'w');
+            %obj.maindata = fopen('KLife_main_detail.dat', 'w');
+            %obj.sidedata = fopen('KLife_side_detail.dat', 'w');
         end
         
         function stop(obj)
@@ -47,17 +47,19 @@ classdef K0SLife < Analysis
             obj.plotct();
             obj.plotlxy();
             obj.plotsurf(20 : 3 : 200, 1 : 0.2 : 5);
-            fclose(obj.maindata);
-            fclose(obj.sidedata);
+            %fclose(obj.maindata);
+            %fclose(obj.sidedata);
         end
         
-        function event(obj, ev)
+        function event(obj, ev, nev)
             ntrk = numel(ev.tracks);
             hlx = Helix(ev.tracks);
+            
             vctmain = zeros(ntrk, 1);
             vctside = zeros(ntrk, 1);
             vlxymain = zeros(ntrk, 1);
             vlxyside = zeros(ntrk, 1);
+            
             side = 0; % counter for number of side band lifetimes
             main = 0; % counter for number of main band lifetimes
             
@@ -94,16 +96,17 @@ classdef K0SLife < Analysis
                     
                     % passed all tests, find and store mass of vertex
                     m = ivtx.mass(obj.mpi, obj.mpi);
+
                     if and((m >= obj.lowm), (m <= obj.upm))
                         main = main + 1;
                         vctmain(main) = ivtx.ct(ilxy, obj.mk);
                         vlxymain(main) = ilxy;
-                        fprintf(obj.maindata, '%i %i %f %f %f %f %f\n', ev.runNumber, ev.eventNumber, m, ilxy, ivtx.ct(ilxy, obj.mk), hlx(it).dpv(ev), hlx(jt).dpv(ev));
+                        %fprintf(obj.maindata, '%i %i %f %f %f %f %f\n', ev.runNumber, ev.eventNumber, m, ilxy, ivtx.ct(ilxy, obj.mk), hlx(it).dpv(ev), hlx(jt).dpv(ev));
                     elseif or(and((m > obj.lows), (m < obj.lowm)), and((m > obj.upm), (m < obj.ups)))
                         side = side + 1;
                         vctside(side) = ivtx.ct(ilxy, obj.mk);
                         vlxyside(side) = ilxy;
-                        fprintf(obj.sidedata, '%i %i %f %f %f %f %f\n', ev.runNumber, ev.eventNumber, m, ilxy, ivtx.ct(ilxy, obj.mk), hlx(it).dpv(ev), hlx(jt).dpv(ev));
+                        %fprintf(obj.sidedata, '%i %i %f %f %f %f %f\n', ev.runNumber, ev.eventNumber, m, ilxy, ivtx.ct(ilxy, obj.mk), hlx(it).dpv(ev), hlx(jt).dpv(ev));
                     end
                 end
             end
