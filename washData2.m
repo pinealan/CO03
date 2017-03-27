@@ -1,50 +1,63 @@
 clear;
 MAX_TRACKS = 500000;
 MAX_EVENTS = 10000;
-RUN_NAME = 'full-mass-cut-raw-extended-K-20';
+RUN_NAME = 'full-mass-cut-K-20';
 
-% Initialse handle to cdf dataset
-cdf = CdfHandle();
-
-% Loads dataset
-data = cdf.load('cdf.dat');
 % Reads tracks from cluster files
-validClusterTracks = CdfTrack(zeros(5, MAX_TRACKS));
-validClusters = {'1', '6', '7', '8', '11', '16', '17', '20'};
-%f_meta = fopen('k-means\results\full-mass-cut-K-20\clusters-meta.txt');
-ntrks = 0;
+valid_clusters = zeros(1, 20);
+meta = zeros(20, 5);
 
-for cluster = validClusters
-    f = fopen(strcat('k-means\results\', RUN_NAME, '\cluster-', cluster{1}, '.txt'));
+f_meta = fopen('k-means\results\full-mass-cut-K-20\clusters-meta.txt');
+for n = 1:20
+    meta(n, :) = fscanf(f_meta, '%d: %d %d %g %% %g %%\n', 5);
+
+    if meta(n, 4) >= 0.1
+        valid_clusters(n) = 1;
+    end
+end
+fclose(f_meta);
+
+valid_clusters = find(valid_clusters);
+valid_tracks = zeros(MAX_TRACKS, 8);
+
+for cluster = valid_clusters
+    f = fopen(strcat('k-means\results\', RUN_NAME, '\cluster-', string(cluster), '.txt'));
     while 1
         s = fgets(f);
         if s == -1
             break;  % end of file
         end
         
-        pars = sscanf(s, '%g %g %g %g %g\n', 5);
-        track = CdfTrack(pars);
+        pars = sscanf(s, '%d %d %g %g %g %g %g %g %d', 8);
         ntrks = ntrks + 1;
-        validClusterTracks(ntrks) = track;
-
-        % @IMPORTANT
-        % Note to self:
-        %  Never in matlab resize big arrays, dynamic memory allocation is
-        %  horrendous and run time can increased to exponential time
-        %  (not sure about that, but it felt like it behaved that way)
-        %
-        %  The following was a benchmark, it took over half an hour to load
-        %  1 cluster when the track array was dynamically sized, but only 2
-        %  seconds to load 10 clusters when it was pre-allocated
-        
-%         if ntrks > MAX_TRACKS
-%             validClusterTracks = [validClusterTracks track];
-%         else
-%             validClusterTracks(ntrks) = track;
-%         end
+        valid_tracks(ntrks, :) = pars;
     end
     
     fclose(f);
-    fprintf(1, strcat('Loaded cluster ', cluster{1}, '\n'));
+    fprintf(1, strcat('Loaded cluster ', string(cluster), '\n'));
 end
 
+valid_tracks = valid_tracks(1: ntrks, :);
+
+% Initialse handle to cdf dataset
+cdf = CdfHandle();
+events = cdf.load('cdf.dat');
+reconstructed_events = MockEvent(MAX_EVENTS);
+nev = 0;
+
+for j = 1:numel(events)
+    ev = events(j);
+    trks = valid_tracks(valid_tracks(:, 1) == j, :);
+    if numel(find(trks)) == 0
+        continue;
+    end
+    reconstructed_events(j).setRunNumber(ev.runNumber);
+    reconstructed_events(j).setEventNumber(ev.eventNumber);
+    reconstructed_events(j).setVertex(ev.vertex);
+    reconstructed_events(j).setTracks(CdfTrack(trks(:, 3:7)'));
+    nev = nev + 1;
+end
+
+reconstructed_events = reconstructed_events(1:nev);
+
+cdf.createCdfDataFile('cdf-washed-k20.dat', reconstructed_events);

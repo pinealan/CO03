@@ -11,7 +11,7 @@ ka = K0SAnalysis();
 %ka.maxd0 = 99;
 
 ka.opts.backup_tracks = 1;
-ka.tracks_fname = strcat('ktrks-', RUN_NAME, '.txt');
+ka.opts.tracks_fname = strcat('ktrks-', RUN_NAME, '.txt');
 
 % starts analysis loop
 loop = Loop('cdf.dat');
