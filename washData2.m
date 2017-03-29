@@ -27,12 +27,12 @@ for cluster = valid_clusters
         if s == -1
             break;  % end of file
         end
-        
+
         pars = sscanf(s, '%d %d %g %g %g %g %g %g %d', 8);
         ntrks = ntrks + 1;
         valid_tracks(ntrks, :) = pars;
     end
-    
+
     fclose(f);
     fprintf(1, strcat('Loaded cluster ', string(cluster), '\n'));
 end
@@ -40,7 +40,7 @@ end
 valid_tracks = valid_tracks(1: ntrks, :);
 
 % Initialse handle to cdf dataset
-cdf = CdfHandle();
+cdf = CdfService();
 events = cdf.load('cdf.dat');
 reconstructed_events = MockEvent(MAX_EVENTS);
 nev = 0;

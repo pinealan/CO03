@@ -79,26 +79,29 @@ classdef K0SAnalysis < Analysis
             nvtx = 0;  % counter number of detected signals (kaon decay vertex)
 
             % loop over all combinations of track pairs
-            for it = 1:(ntrk - 1)
-                for jt = (it + 1):ntrk
+            for m = 1:(ntrk - 1)
+                helix1 = hlxs(m);
+                
+                for n = (m + 1):ntrk
+                    helix2 = hlxs(n);
                     
                     % checks that the tracks are opposite charge
-                    if ((ev.tracks(it).curvature * ev.tracks(jt).curvature) > 0)
+                    if ((helix1.curvature * helix2.curvature) > 0)
                         continue;
                     end
                     
                     % checks the parameter related to each track
-                    if (abs(hlxs(it).pT()) < obj.minpt)
+                    if (abs(helix1.pT()) < obj.minpt)
                         continue;
-                    elseif (abs(hlxs(jt).pT()) < obj.minpt)
+                    elseif (abs(helix2.pT()) < obj.minpt)
                         continue;
-                    elseif (abs(hlxs(it).dpv(ev)) < obj.mindpv)
+                    elseif (abs(helix1.dpv(ev)) < obj.mindpv)
                         continue;
-                    elseif (abs(hlxs(jt).dpv(ev)) < obj.mindpv)
+                    elseif (abs(helix2.dpv(ev)) < obj.mindpv)
                         continue;
                     end
                     
-                    ivtx = Vertex(hlxs(it), hlxs(jt));
+                    ivtx = Vertex(helix1, helix2);
                     
                     % stops if tracks does not intersect
                     if isempty(ivtx.vtx)
@@ -118,8 +121,8 @@ classdef K0SAnalysis < Analysis
                     
                     % label tracks from kaon if mass falls in window
                     if obj.genuineMass(masses(nvtx))
-                        labels(it) = 1;
-                        labels(jt) = 1;                    
+                        labels(m) = 1;
+                        labels(n) = 1;                    
                     end
                 end
             end
@@ -145,11 +148,11 @@ classdef K0SAnalysis < Analysis
                 fprintf(obj.ftrk, '%d %d %g %g %g %g %g %g %d\n', ...
                     nev, ...
                     m, ...
-                    hlxs(m).trk.cotTheta, ...
-                    hlxs(m).trk.curvature, ...
-                    hlxs(m).trk.d0, ...
-                    hlxs(m).trk.phi0, ...
-                    hlxs(m).trk.z0, ...
+                    hlxs(m).cotTheta, ...
+                    hlxs(m).curvature, ...
+                    hlxs(m).d0, ...
+                    hlxs(m).phi0, ...
+                    hlxs(m).z0, ...
                     hlxs(m).dpv(ev), ...
                     labels(m) ...
                 );
@@ -157,7 +160,7 @@ classdef K0SAnalysis < Analysis
         end
         
         % store histogram data in txt file
-        function BackResults(obj, filename)
+        function backResults(obj, filename)
             id = fopen(filename, 'w');
 
             % histogram meta-data
@@ -173,7 +176,7 @@ classdef K0SAnalysis < Analysis
         end
         
         % retrieve stored histogram data from txt file
-        function mass = GetResults(filename)
+        function mass = getResults(filename)
             id = fopen(filename);
             
             n = fscanf(id, '%i', 1);

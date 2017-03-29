@@ -37,8 +37,7 @@ classdef Analysis < handle & matlab.mixin.Heterogeneous
     end
     
     methods (Abstract)
-        event(obj, ev);
-        GetResults(obj, filename);
-        BackResults(obj, filename);
+        getResults(obj, filename);
+        backResults(obj, filename);
     end
 end

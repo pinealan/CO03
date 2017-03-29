@@ -1,4 +1,4 @@
-classdef Helix
+classdef Helix < CdfTrack
     % Helix is a method class for geometric calculations based on CdfTrack.
     % Methods:
     %   obj.radius
@@ -11,10 +11,6 @@ classdef Helix
     %   obj.dpv     (signed impact parameter)
     %   obj.engy    (energy (always positive))
     
-    properties(SetAccess=protected)
-        trk;    % CdfTrack
-    end
-    
     properties(Constant, Hidden=true)
         kpc = 0.002116;
     end
@@ -25,19 +21,23 @@ classdef Helix
             if nargin > 0
                 obj(numel(in)) = Helix;     %creates an array of the right size
                 for i = 1:numel(in)
-                    obj(i).trk = in(i);
+                    obj(i).cotTheta  = in(i).cotTheta;
+                    obj(i).curvature = in(i).curvature;
+                    obj(i).d0        = in(i).d0;
+                    obj(i).phi0      = in(i).phi0;
+                    obj(i).z0        = in(i).z0;
                 end
             end
-        end 
+        end
         
         %% finds the radius of the helix in the xy plane
         function out = radius(obj)
-            out = 1/(2 * obj.trk.curvature);
+            out = 1/(2 * obj.curvature);
         end
         
         %% finds the center of the helix
         function out = center(obj)
-            out = (obj.radius() + obj.trk.d0) * exp(1i*(obj.trk.phi0 + pi/2));
+            out = (obj.radius() + obj.d0) * exp(1i*(obj.phi0 + pi/2));
         end
         
         %% gives the corresponding coordinates in 3D
@@ -45,10 +45,10 @@ classdef Helix
             n = size(arg, 2);
             out = zeros(3, n);
             for index = 1:n
-                w = obj.center() - 1i * obj.radius() * exp(1i * (obj.trk.phi0 + arg(index) * sign(obj.trk.curvature)));
+                w = obj.center() - 1i * obj.radius() * exp(1i * (obj.phi0 + arg(index) * sign(obj.curvature)));
                 out(1, index) = real(w);    % x-coord
                 out(2, index) = imag(w);    % y-coord
-                out(3, index) = obj.trk.z0 + abs(obj.radius()) * arg(index) * obj.trk.cotTheta;
+                out(3, index) = obj.z0 + abs(obj.radius()) * arg(index) * obj.cotTheta;
             end
         end
 
@@ -79,10 +79,10 @@ classdef Helix
             alpha2 = acos(cosalpha2);
             
             % the long argument here is to modify the points function into intersection equation; see script
-            p1 = (del + alpha1 - h1.trk.phi0) / sign(h1.trk.curvature) + pi/2;
-            m1 = (del - alpha1 - h1.trk.phi0) / sign(h1.trk.curvature) + pi/2;
-            p2 = (del - alpha2 - h2.trk.phi0) / sign(h2.trk.curvature) + pi/2;
-            m2 = (del + alpha2 - h2.trk.phi0) / sign(h2.trk.curvature) + pi/2;
+            p1 = (del + alpha1 - h1.phi0) / sign(h1.curvature) + pi/2;
+            m1 = (del - alpha1 - h1.phi0) / sign(h1.curvature) + pi/2;
+            p2 = (del - alpha2 - h2.phi0) / sign(h2.curvature) + pi/2;
+            m2 = (del + alpha2 - h2.phi0) / sign(h2.curvature) + pi/2;
 
             if (real(c1) - real(c2)) > 0
                 p1 = p1 + pi;
@@ -120,21 +120,21 @@ classdef Helix
 
         %% signed magnitude of transverse momentum in GeV/c
         function out = pT(obj)
-            out = obj.kpc / obj.trk.curvature;
+            out = obj.kpc / obj.curvature;
         end
 
         %% helix momentum vector (x; y; z)
         function out = p(obj, pos)
             out = zeros(3,1);
             pT = abs(obj.pT());
-            out(1) = pT * ((1 + 2 * obj.trk.curvature * obj.trk.d0) * cos(obj.trk.phi0) - 2 * obj.trk.curvature * pos(2));
-            out(2) = pT * ((1 + 2 * obj.trk.curvature * obj.trk.d0) * sin(obj.trk.phi0) + 2 * obj.trk.curvature * pos(1));
-            out(3) = pT * obj.trk.cotTheta;
+            out(1) = pT * ((1 + 2 * obj.curvature * obj.d0) * cos(obj.phi0) - 2 * obj.curvature * pos(2));
+            out(2) = pT * ((1 + 2 * obj.curvature * obj.d0) * sin(obj.phi0) + 2 * obj.curvature * pos(1));
+            out(3) = pT * obj.cotTheta;
         end
         
         %% magnitude of momentum of helix
         function out = normp(obj)
-            out = obj.pT() * sqrt(1 + obj.trk.cotTheta ^ 2);
+            out = obj.pT() * sqrt(1 + obj.cotTheta ^ 2);
         end
         
         %% impact parameter with respect to true impact center
@@ -194,7 +194,7 @@ end % classdef
 %             wm2 = h2.points(mod(m2, pi))
             
 %             % old original flawed method; fails when abs(angle) > pi
-%             wp1 = h1.points((del + alpha1 - h1.trk.phi0) / sign(h1.trk.curvature) + pi/2)
-%             wm1 = h1.points((del - alpha1 - h1.trk.phi0) / sign(h1.trk.curvature) + pi/2)
-%             wp2 = h2.points((del - alpha2 - h2.trk.phi0) / sign(h2.trk.curvature) + pi/2)
-%             wm2 = h2.points((del + alpha2 - h2.trk.phi0) / sign(h2.trk.curvature) + pi/2)
+%             wp1 = h1.points((del + alpha1 - h1.phi0) / sign(h1.curvature) + pi/2)
+%             wm1 = h1.points((del - alpha1 - h1.phi0) / sign(h1.curvature) + pi/2)
+%             wp2 = h2.points((del - alpha2 - h2.phi0) / sign(h2.curvature) + pi/2)
+%             wm2 = h2.points((del + alpha2 - h2.phi0) / sign(h2.curvature) + pi/2)
