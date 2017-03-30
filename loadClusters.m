@@ -1,23 +1,16 @@
-function [tracks, ntrks] = loadClusters(run_name, cluster_ids, max_tracks)
-    ntrks = 0;    
+function [tracks, ntrk] = loadClusters(run_name, cluster_ids, max_tracks)
+    ntrk = 0;    
     tracks = zeros(max_tracks, 8);
     
     for cluster = cluster_ids
-        f = fopen(strcat('k-means\results\', run_name, '\cluster-', string(cluster), '.txt'));
+        f = strcat('k-means\results\', run_name, '\cluster-', string(cluster), '.txt');
         
-        while 1
-            s = fgets(f);
-            if s == -1
-                break;  % end of file
-            end
+        [cluster_tracks, cluster_ntrk] = loadCluster(f, max_tracks);
+        tracks(ntrk+1: ntrk+cluster_ntrk, :) = cluster_tracks;
+        ntrk = ntrk + cluster_ntrk;
 
-            pars = sscanf(s, '%d %d %g %g %g %g %g %g %d', 8);
-            ntrks = ntrks + 1;
-            tracks(ntrks, :) = pars;
-        end
-
-        fclose(f);
         fprintf(1, strcat('Loaded cluster ', string(cluster), '\n'));
     end
-    tracks = tracks(1:ntrks, :);
+    
+    tracks = tracks(1:ntrk, :);
 end
