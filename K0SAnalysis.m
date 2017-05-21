@@ -27,7 +27,7 @@ classdef K0SAnalysis < Analysis
             obj.opts.mass_window = 0.02 ;
 
             if nargin == 1
-                obj.mass = GetResult(filename);
+                obj.getResult(filename);
             end
         end
         
@@ -160,7 +160,7 @@ classdef K0SAnalysis < Analysis
         end
         
         % store histogram data in txt file
-        function backResults(obj, filename)
+        function backResult(obj, filename)
             id = fopen(filename, 'w');
 
             % histogram meta-data
@@ -176,20 +176,24 @@ classdef K0SAnalysis < Analysis
         end
         
         % retrieve stored histogram data from txt file
-        function mass = getResults(filename)
+        function getResult(obj, filename)
             id = fopen(filename);
             
             n = fscanf(id, '%i', 1);
-            [xlo, xhi, uf, of] = fscanf(id, '%g %g %i %i', 4);
+            head = fscanf(id, '%g %g %i %i', 4);
+            xlo = head(1);
+            xhi = head(2);
+            uf  = head(3);
+            of  = head(4);
             pars = fscanf(id, '%i', (n));
 
             % initialise histogram
-            mass = Histogram(n, xlo, xhi);
-            mass.underflow = uf;
-            mass.overflow = of;
+            obj.mass = Histogram(n, xlo, xhi);
+            obj.mass.underflow = uf;
+            obj.mass.overflow = of;
             
             for k = 1:n
-                mass.data(k) = pars(k);
+                obj.mass.data(k) = pars(k);
             end
             
             fclose(id);
