@@ -5,7 +5,6 @@ detail = fopen('K_details.dat', 'r');
 sig = fopen('K-sig.txt', 'w');
 
 tline = fgets(detail);
-tline = fgets(detail);
 
 
 while ischar(tline)

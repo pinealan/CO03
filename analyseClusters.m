@@ -1,3 +1,5 @@
+tic
+
 clear;
 RUN_NAME = 'full-mass-cut-K-20';
 MAX_TRACKS = 500000;
@@ -23,10 +25,10 @@ fclose(f_meta);
 valid_clusters = find(valid_clusters);
 tracks_params = loadClusters(RUN_NAME, valid_clusters, MAX_TRACKS);
 
-params.minpt    = 1;
-params.mindpv   = 0.3;
-params.minlxy   = 2;
-params.maxd0    = 0.5;
+params.minpt    = 0;
+params.mindpv   = 0;
+params.minlxy   = -999;
+params.maxd0    = 99;
 
 ntrk = size(tracks_params, 1);
 nvtx = 0;
@@ -83,6 +85,8 @@ for track1_param = tracks_params'
     end
 end
 
+toc
+
 mass = Histogram(100, 0.4, 0.6);
 mass.fill(masses(1:nvtx));
 mass.plot();
@@ -90,4 +94,14 @@ mass.plot();
 xlabel('mass [GeV/c^2]');
 ylabel('entries/(2 MeV/c^2)');
 
-saveas(figure(1), strcat('hist-', RUN_NAME, '.fig'));
+%saveas(figure(1), 'fig/hist-mixed-pt-cut', 'fig');
+%saveas(figure(1), 'fig/hist-mixed-pt-cut', 'png');
+
+ka = K0SAnalysis();
+ka.mass     = mass;
+ka.minpt    = params.minpt;
+ka.mindpv   = params.mindpv;
+ka.minlxy   = params.minlxy;
+ka.maxd0    = params.maxd0;
+
+ka.backResult('hist-mixed-no-cut.txt');
